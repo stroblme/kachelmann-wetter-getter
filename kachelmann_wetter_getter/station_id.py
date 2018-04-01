@@ -3,7 +3,7 @@ from logging import getLogger
 from threading import Lock
 from typing import Optional, Any, Union, ContextManager
 
-from .http import new_session_getter, Session
+from .http import new_session_getter, SessionGetter
 
 
 __all__ = 'LocationCache', 'CouldNotRetrieve', 'NoSuchLocation'
@@ -50,10 +50,10 @@ class LocationCache:
     SEARCH_URL = 'https://kachelmannwetter.com/de/wetter/search'
 
     def __init__(self, *,
-                 lock         : Optional[ContextManager[Any]]     = None,
-                 cache        : Optional[MutableMapping]          = None,
-                 get_session  : Optional[ContextManager[Session]] = None,
-                 cache_absent : Optional[bool]                    = None):
+                 lock         : Optional[ContextManager[Any]] = None,
+                 cache        : Optional[MutableMapping]      = None,
+                 get_session  : Optional[SessionGetter]       = None,
+                 cache_absent : Optional[bool]                = None):
         '''Retrieve a location for a user input.
 
         Parameters

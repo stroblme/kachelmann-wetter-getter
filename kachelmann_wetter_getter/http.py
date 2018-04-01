@@ -21,6 +21,8 @@ header_modication_tracker = object()
 
 logger = getLogger(__name__)
 
+SessionGetter = Callable[[], ContextManager[Session]]
+
 
 def invalidate_sessions():
     '''Invalidates all sessions created with new_session_getter().
@@ -60,7 +62,7 @@ def new_session() -> Session:
     return session
 
 
-def new_session_getter(name:Optional[str]='<unspecified>') -> Callable[[], ContextManager[Session]]:
+def new_session_getter(name:Optional[str]='<unspecified>') -> SessionGetter:
     '''Create a session cache that returns an existing session unless the user agent was modified.
 
     Parameters

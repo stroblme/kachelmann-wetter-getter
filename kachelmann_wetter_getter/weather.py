@@ -1,11 +1,11 @@
 from collections import namedtuple
 from logging import getLogger
-from typing import Optional, Sequence, NewType, ContextManager
+from typing import Optional, Sequence, NewType
 
 from dataclasses import dataclass
 from lxml.html.html5parser import fragment_fromstring
 
-from .http import new_session_getter, Session
+from .http import new_session_getter, SessionGetter
 from .station_id import AnyLocation, LocationCache
 
 
@@ -88,27 +88,19 @@ def extract_symbol(img):
     return img.get('src').rsplit('/', 1)[-1].split('.')[0].split('_', 2)[1]
 
 
+def xpath(node, path):
+    if node is None:
+        return ()
+    else:
+        return node.xpath(path, namespaces=namespaces)
+
+
 def parse_hour(hour_data):
-    hours, = hour_data.xpath(
-        f'./xhtml:div[{has_class("fc-hours")}]/text()',
-        namespaces=namespaces,
-    )
-    symbol, = hour_data.xpath(
-        f'./xhtml:div[{has_class("fc-symbol")}]',
-        namespaces=namespaces,
-    )
-    img, = symbol.xpath(
-        './xhtml:img',
-        namespaces=namespaces,
-    )
-    temperature, = hour_data.xpath(
-        f'./xhtml:div[{has_class("fc-temp")}]/text()',
-        namespaces=namespaces,
-    )
-    chance_of_rain, = hour_data.xpath(
-        f'./xhtml:div[{has_class("fc-rain")}]/text()',
-        namespaces=namespaces,
-    )
+    hours, = xpath(hour_data, f'./xhtml:div[{has_class("fc-hours")}]/text()')
+    symbol, = xpath(hour_data, f'./xhtml:div[{has_class("fc-symbol")}]')
+    img, = xpath(symbol, './xhtml:img')
+    temperature, = xpath(hour_data, f'./xhtml:div[{has_class("fc-temp")}]/text()')
+    chance_of_rain, = xpath(hour_data, f'./xhtml:div[{has_class("fc-rain")}]/text()')
 
     hours, minutes = (
         int(s, 10) for s in text_content(hours).split(maxsplit=1)[0].split(':', 1)
@@ -128,41 +120,21 @@ def parse_hour(hour_data):
 
 
 def parse_day(day_data):
-    friendly_name, date = day_data.xpath(
-        f'./xhtml:div[{has_class("panel-heading")}]/text()',
-        namespaces=namespaces)
-    body, = day_data.xpath(
-        f'./xhtml:div[{has_class("panel-body")}]',
-        namespaces=namespaces,
-    )
-    morning, = body.xpath(
-        f'./xhtml:div[{has_class("wsymbol-morning")}]/xhtml:img',
-        namespaces=namespaces,
-    )
-    afternoon, = body.xpath(
-        f'./xhtml:div[{has_class("wsymbol-afternoon")}]/xhtml:img',
-        namespaces=namespaces,
-    )
-    evening, = body.xpath(
-        f'./xhtml:div[{has_class("wsymbol-evening")}]/xhtml:img',
-        namespaces=namespaces,
-    )
-    minmax, = body.xpath(
-        f'./xhtml:div[{has_class("day-temp-maxmin")}]',
-        namespaces=namespaces,
-    )
-    temp_max, = minmax.xpath(
+    friendly_name, date = xpath(day_data, f'./xhtml:div[{has_class("panel-heading")}]/text()')
+    body, = xpath(day_data, f'./xhtml:div[{has_class("panel-body")}]')
+    morning, = xpath(body, f'./xhtml:div[{has_class("wsymbol-morning")}]/xhtml:img')
+    afternoon, = xpath(body, f'./xhtml:div[{has_class("wsymbol-afternoon")}]/xhtml:img')
+    evening, = xpath(body, f'./xhtml:div[{has_class("wsymbol-evening")}]/xhtml:img')
+    minmax, = xpath(body, f'./xhtml:div[{has_class("day-temp-maxmin")}]')
+    temp_max, = xpath(
+        minmax,
         f'./xhtml:div[{has_class("day-temp-max")}]/xhtml:div[{has_class("day-fc-temp")}]/text()',
-        namespaces=namespaces,
     )
-    temp_min, = minmax.xpath(
+    temp_min, = xpath(
+        minmax,
         f'./xhtml:div[{has_class("day-temp-min")}]/xhtml:div[{has_class("day-fc-temp")}]/text()',
-        namespaces=namespaces,
     )
-    risks, windrain = body.xpath(
-        f'./xhtml:div[{has_class("day-risks")}]/xhtml:div',
-        namespaces=namespaces,
-    )
+    risks, windrain = xpath(body, f'./xhtml:div[{has_class("day-risks")}]/xhtml:div')
 
     friendly_name = text_content(friendly_name)
     date = text_content(date)
@@ -194,8 +166,8 @@ class KachelmannWetter:
     AJAX_URL = 'https://kachelmannwetter.com/de/ajax_pub'
 
     def __init__(self, *,
-                 get_session    : Optional[ContextManager[Session]] = None,
-                 location_cache : Optional[LocationCache]           = None):
+                 get_session    : Optional[SessionGetter] = None,
+                 location_cache : Optional[LocationCache] = None):
         if get_session is None:
             get_session = new_session_getter(self.__class__.__name__)
         if location_cache is None:
@@ -222,16 +194,13 @@ class KachelmannWetter:
 
         root = fragment_fromstring(content, create_parent='root')
 
-        data_hours = root.xpath(
+        data_hours = xpath(
+            root,
             f'/root/xhtml:div[{has_class("nexthours-scroll")}]/xhtml:div/xhtml:div',
-            namespaces=namespaces,
         )
         data_hours = tuple(parse_hour(hour_data) for hour_data in data_hours)
 
-        data_days = root.xpath(
-            f'/root/xhtml:div[{has_class("day-row")}]/xhtml:div/xhtml:div',
-            namespaces=namespaces,
-        )
+        data_days = xpath(root, f'/root/xhtml:div[{has_class("day-row")}]/xhtml:div/xhtml:div')
         data_days = tuple(parse_day(day_data) for day_data in data_days)
 
         return NextHoursDaysData(data_hours, data_days)
