@@ -1,6 +1,5 @@
-from collections import namedtuple
 from logging import getLogger
-from typing import Optional, Sequence, NewType
+from typing import Optional, List, NewType
 
 from dataclasses import dataclass
 from lxml.html.html5parser import fragment_fromstring
@@ -22,8 +21,8 @@ Millimeters = NewType('Millimeters', float)
 
 @dataclass
 class SkyData:
-    friendly_name: str  # "bedeckt"
-    symbol: str         # "overcast"
+    friendly_name: Optional[str]  # "bedeckt"
+    symbol: str                   # "overcast"
 
 @dataclass
 class WindData:
@@ -47,19 +46,19 @@ class NextDaysData:
     avg_wind: WindData
     max_wind: Kph
     amount_rain: Millimeters
-    risks: Sequence[SkyData]
+    risks: List[SkyData]
     morning: SkyData
     afternoon: SkyData
     evening: SkyData
 
 @dataclass
 class NextHoursDaysData:
-    hours: Sequence[NextHoursData]
-    days: Sequence[NextDaysData]
+    hours: List[NextHoursData]
+    days: List[NextDaysData]
 
 
 namespaces = {
-    'xhtml':'http://www.w3.org/1999/xhtml',
+    'xhtml': 'http://www.w3.org/1999/xhtml',
 }
 
 
@@ -69,19 +68,18 @@ def has_class(name):
 
 def text_content(node):
     if node is None:
-        return node
-    elif isinstance(node, str):
+        return ''
+
+    if isinstance(node, str):
         pass
     elif isinstance(node, bytes):
         node = node.decode('UTF-8', 'replace')
     else:
-        text_func = getattr(node, 'text_content', None)
-        if text_func is not None:
-            node = text_func()
-        else:
-            node = node.text
+        text_content = getattr(node, 'text_content', None)
+        text = text_content() if (text_content is not None) else None
+        node = text if (text is not None) else node.text
 
-    return node.replace('\xA0', ' ').strip()
+    return (node or '').replace('\xA0', ' ').strip()
 
 
 def extract_symbol(img):
@@ -135,15 +133,17 @@ def parse_day(day_data):
         f'./xhtml:div[{has_class("day-temp-min")}]/xhtml:div[{has_class("day-fc-temp")}]/text()',
     )
     risks, windrain = xpath(body, f'./xhtml:div[{has_class("day-risks")}]/xhtml:div')
+    avg_wind, max_wind, amount_rain = xpath(windrain, f'./xhtml:div[{has_class("fc-rain")}]/text()')
+    risks = xpath(risks, f'./xhtml:div[{has_class("day-fc-symbol")}]/xhtml:img')
 
     friendly_name = text_content(friendly_name)
     date = text_content(date)
     temp_min = float(text_content(temp_min).split('°', 1)[0])
     temp_max = float(text_content(temp_max).split('°', 1)[0])
-    avg_wind = '''TODO'''
-    max_wind = '''TODO'''
-    amount_rain = '''TODO'''
-    risks = '''TODO'''
+    avg_wind = float(text_content(avg_wind).split('k', 1)[0])
+    max_wind = float(text_content(max_wind).split('k', 1)[0])
+    amount_rain = float(text_content(amount_rain).split('m', 1)[0])
+    risks = [SkyData(friendly_name=None, symbol=extract_symbol(img)) for img in risks]
     morning = SkyData(friendly_name=morning.get('alt'), symbol=extract_symbol(morning))
     afternoon = SkyData(friendly_name=afternoon.get('alt'), symbol=extract_symbol(afternoon))
     evening = SkyData(friendly_name=evening.get('alt'), symbol=extract_symbol(evening))
@@ -198,9 +198,9 @@ class KachelmannWetter:
             root,
             f'/root/xhtml:div[{has_class("nexthours-scroll")}]/xhtml:div/xhtml:div',
         )
-        data_hours = tuple(parse_hour(hour_data) for hour_data in data_hours)
+        data_hours = [parse_hour(hour_data) for hour_data in data_hours]
 
         data_days = xpath(root, f'/root/xhtml:div[{has_class("day-row")}]/xhtml:div/xhtml:div')
-        data_days = tuple(parse_day(day_data) for day_data in data_days)
+        data_days = [parse_day(day_data) for day_data in data_days]
 
         return NextHoursDaysData(data_hours, data_days)

@@ -62,7 +62,7 @@ def new_session() -> Session:
     return session
 
 
-def new_session_getter(name:Optional[str]='<unspecified>') -> SessionGetter:
+def new_session_getter(name:Optional[str]=None) -> SessionGetter:
     '''Create a session cache that returns an existing session unless the user agent was modified.
 
     Parameters
@@ -76,6 +76,9 @@ def new_session_getter(name:Optional[str]='<unspecified>') -> SessionGetter:
         a new requests session
     '''
     lock = Lock()
+
+    if name is None:
+        name = '<unspecified>'
 
     def getter():
         @contextmanager
