@@ -24,10 +24,12 @@ class SkyData:
     friendly_name: Optional[str]  # "bedeckt"
     symbol: str                   # "overcast"
 
+
 @dataclass
 class WindData:
     direction: str   # "sw"
     strength: Kph    # 16.0
+
 
 @dataclass
 class NextHoursData:
@@ -36,6 +38,7 @@ class NextHoursData:
     sky: SkyData
     temperature: DegCelsius  # 3.0
     chance_of_rain: Percent  # 0.88
+
 
 @dataclass
 class NextDaysData:
@@ -50,6 +53,7 @@ class NextDaysData:
     morning: SkyData
     afternoon: SkyData
     evening: SkyData
+
 
 @dataclass
 class NextHoursDaysData:
@@ -162,12 +166,13 @@ def parse_day(day_data):
         evening=evening,
     )
 
+
 class KachelmannWetter:
     AJAX_URL = 'https://kachelmannwetter.com/de/ajax_pub'
 
     def __init__(self, *,
-                 get_session    : Optional[SessionGetter] = None,
-                 location_cache : Optional[LocationCache] = None):
+                 get_session: Optional[SessionGetter] = None,
+                 location_cache: Optional[LocationCache] = None):
         if get_session is None:
             get_session = new_session_getter(self.__class__.__name__)
         if location_cache is None:
@@ -176,7 +181,7 @@ class KachelmannWetter:
         self.get_session = get_session
         self.location_cache = location_cache
 
-    def next_hours_days(self, location:AnyLocation) -> Optional[NextHoursDaysData]:
+    def next_hours_days(self, location: AnyLocation) -> Optional[NextHoursDaysData]:
         city_id = self.location_cache.get_station_id(location)
         if city_id is None:
             return
@@ -185,7 +190,7 @@ class KachelmannWetter:
         with self.get_session() as session:
             with session.get(url) as resp:
                 status_code = resp.status_code
-                if not resp.status_code in range(200, 300):
+                if resp.status_code not in range(200, 300):
                     logger.warn('Could not retrieve date for url=%r, status_code=%r',
                                 url, status_code)
                     return

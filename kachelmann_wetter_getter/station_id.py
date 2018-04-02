@@ -50,10 +50,10 @@ class LocationCache:
     SEARCH_URL = 'https://kachelmannwetter.com/de/wetter/search'
 
     def __init__(self, *,
-                 lock         : Optional[ContextManager[Any]] = None,
-                 cache        : Optional[MutableMapping]      = None,
-                 get_session  : Optional[SessionGetter]       = None,
-                 cache_absent : Optional[bool]                = None):
+                 lock: Optional[ContextManager[Any]] = None,
+                 cache: Optional[MutableMapping] = None,
+                 get_session: Optional[SessionGetter] = None,
+                 cache_absent: Optional[bool] = None):
         '''Retrieve a location for a user input.
 
         Parameters
@@ -75,7 +75,7 @@ class LocationCache:
         self.get_session = get_session
         self.cache_absent = cache_absent
 
-    def search_location(self, name:str) -> LocationResult:
+    def search_location(self, name: str) -> LocationResult:
         '''Search for a location by name.
 
         Parameters
@@ -92,7 +92,7 @@ class LocationCache:
         NoSuchLocation
             There was an error requesting the result.
         '''
-        data={
+        data = {
             'forecast_action': 'wetter',
             'forecast_input': name,
         }
@@ -119,7 +119,7 @@ class LocationCache:
 
         return StationId(stationid)
 
-    def get_location(self, name:str) -> Optional[StationId]:
+    def get_location(self, name: str) -> Optional[StationId]:
         '''Search for a location by name and cache the result
 
         Parameters
@@ -141,7 +141,7 @@ class LocationCache:
 
             result = self.search_location(name)
             if isinstance(result, CouldNotRetrieve):
-                return 
+                return
 
             if not isinstance(result, NoSuchLocation):
                 self.cache[name] = result
@@ -149,10 +149,10 @@ class LocationCache:
                 if self.cache_absent:
                     self.cache[name] = result
                 result = None
-            
+
             return result
 
-    def get_station_id(self, location:AnyLocation, **kw) -> Optional[int]:
+    def get_station_id(self, location: AnyLocation, **kw) -> Optional[int]:
         '''
         Look up a station ID or extract the result.
 
@@ -161,7 +161,7 @@ class LocationCache:
         location
             Either the [name | number] of a location, or the result of
             [get_location() | search_location()].
-        kw
+        **kw
             Any keyword arguments are passed to get_location().
 
         Returns

@@ -31,7 +31,7 @@ def invalidate_sessions():
     header_modication_tracker = object()
 
 
-def set_user_agent(user_agent:str, *, replace:bool=False):
+def set_user_agent(user_agent: str, *, replace: bool = False):
     '''Defines the User-Agent header to send to remote hosts.
 
     Parameters
@@ -62,7 +62,7 @@ def new_session() -> Session:
     return session
 
 
-def new_session_getter(name:Optional[str]=None) -> SessionGetter:
+def new_session_getter(name: Optional[str] = None) -> SessionGetter:
     '''Create a session cache that returns an existing session unless the user agent was modified.
 
     Parameters
