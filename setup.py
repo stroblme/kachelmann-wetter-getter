@@ -15,14 +15,16 @@ setup(
     description='Get weather data from https://kachelmannwetter.com/',
     author='/u/plistig',
     author_email='https://www.reddit.com/message/compose/?to=plistig',
-    python_requires='>=3.6',  # f-strings
+    url='https://github.com/plistig/kachelmann-wetter-getter',
+    download_url='https://github.com/plistig/kachelmann-wetter-getter/archive/master.zip',
+    license='Apache License (2.0)',
+    python_requires='>=3.6',
     install_requires=(
         'cchardet >= 2.1.1',
         'dataclasses >= 0.5',
         'html5lib >= 1.0.1',
         'lxml >= 4.2.1',
         'requests >= 2.18.4',
-        'semver >= 2.7.9',
     ),
     packages=(module_name,),
     package_data={
