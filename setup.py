@@ -22,6 +22,7 @@ setup(
         'html5lib >= 1.0.1',
         'lxml >= 4.2.1',
         'requests >= 2.18.4',
+        'semver >= 2.7.9',
     ),
     packages=(module_name,),
     package_data={

@@ -3,7 +3,7 @@ from logging import getLogger
 from threading import Lock
 from typing import Optional, Any, Union, ContextManager
 
-from .http import new_session_getter, SessionGetter
+from ._http import new_session_getter, SessionGetter
 
 
 __all__ = 'LocationCache', 'CouldNotRetrieve', 'NoSuchLocation'

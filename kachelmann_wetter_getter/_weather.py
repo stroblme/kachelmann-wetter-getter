@@ -4,8 +4,8 @@ from typing import Optional, List, NewType
 from dataclasses import dataclass
 from lxml.html.html5parser import fragment_fromstring
 
-from .http import new_session_getter, SessionGetter
-from .station_id import AnyLocation, LocationCache
+from ._http import new_session_getter, SessionGetter
+from ._station_id import AnyLocation, LocationCache
 
 
 __all__ = 'KachelmannWetter',

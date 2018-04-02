@@ -4,14 +4,16 @@ from threading import Lock
 from typing import Callable, Optional, ContextManager
 
 from requests import Session
+from semver import format_version
 
-from . import __version__
+from ._version import version_info
 
 
 __all__ = 'set_user_agent',
 
 
-default_user_agent = f'Kachelmann-Wetter-Getter/v{".".join(str(s) for s in __version__)}'
+default_user_agent = (f'Kachelmann-Wetter-Getter/'
+                      f'v{version_info[0]}.{version_info[1]}.{version_info[2]}')
 
 headers = {
     'User-Agent': default_user_agent,
